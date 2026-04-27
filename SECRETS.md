@@ -69,7 +69,7 @@ Each exists for one specific reason:
 | `REDIS_PASSWORD` | Auth for Redis `--requirepass` | ~16 hex chars | api, worker, worker-beat, pinger, redis itself via shell-wrapped `--requirepass` |
 | `SECRET_KEY` | JWT signing key | 64 hex chars | api only |
 | `VAULT_KEY` | AES-256-GCM key that encrypts **stored scan credentials** in the DB `credentials` table | 64 hex chars (32 bytes) | api, worker — both sides decrypt the DB-stored SSH/SNMP/WMI passwords |
-| `VAULT_ROOT_TOKEN` | OpenBao dev-mode root token | 32+ hex chars | api, worker, vault itself |
+| `VAULT_ROOT_TOKEN` | OpenBao root token. In dev-mode (default) this is the static value below; in prod-mode (`VAULT_MODE=prod`) the token below seeds the env var, but the entrypoint generates a real Shamir-split root token via `bao operator init` on first boot and writes it to the same tmpfs path | 32+ hex chars | api, worker, vault itself |
 | `INTERNAL_API_SECRET` | Shared secret on `X-Internal-Secret` header for `/api/v1/agents/internal/*` routes (worker → api) | 32+ hex chars | api, worker |
 | `FIRST_ADMIN_PASSWORD` | Seeds the admin row on first-ever boot (users table empty) | ≥ 12 chars | api (once, then inert) |
 | `GRAFANA_ADMIN_PASSWORD` | Grafana admin login | ~16 hex chars | grafana (via `GF_SECURITY_ADMIN_PASSWORD__FILE`) |
@@ -717,7 +717,7 @@ echo "API healthy."
 |---|---|
 | "If age.key is lost, how do we decrypt the OLD secrets?" | **We don't.** We generate NEW random secret values and encrypt those instead. The old `.enc` files become useless. |
 | "But the postgres DB was initialized with the OLD password — how do we get back in?" | postgres stores passwords as hashes in its `pg_authid` table. The hash is created on first init using `POSTGRES_PASSWORD_FILE`, but after that postgres only cares what's in `pg_authid`. We can rewrite `pg_authid` by running `ALTER USER invenzo PASSWORD` as a postgres superuser. And we can connect as that superuser without a password by temporarily setting `pg_hba.conf` to `trust` auth on local connections. Once the password is reset, we restore pg_hba. |
-| "What about redis, grafana, openbao? They were started with the old passwords." | None of them encrypt their persisted data using the password — the password is only an auth check. Redis AOF/RDB files don't care. Grafana's dashboards in `grafana_data` don't care. OpenBao in dev-mode keeps data in memory, so it gets re-initialized fresh anyway. Restart with the new password, and they all work. |
+| "What about redis, grafana, openbao? They were started with the old passwords." | None of them encrypt their persisted data using the password — the password is only an auth check. Redis AOF/RDB files don't care. Grafana's dashboards in `grafana_data` don't care. OpenBao behavior splits by mode: in dev-mode (default) data is in memory and gets re-initialized fresh on the new password. In prod-mode (`VAULT_MODE=prod`) the unseal blob at `/encrypted/openbao_init.json.enc` is age-encrypted to the OLD recipient — recovery re-encrypts it to the new recipient (or the entrypoint regenerates it on first boot if the file is missing). The `vault_data` file backend is left alone; only `pg_authid` (postgres) and the seal blob (openbao prod-mode) need touching. |
 | "Can the admin still log in?" | Yes. User passwords in the `users` table are bcrypt-hashed. Bcrypt is not encrypted by VAULT_KEY. The admin's password is whatever they set it to (possibly via install.sh's `FIRST_ADMIN_PASSWORD`) and it's preserved across recovery. |
 | "What exactly is lost?" | Only the `credentials.secret_encrypted` column in the DB — AES-encrypted with the old VAULT_KEY. New VAULT_KEY can't decrypt those bytes. The credential NAMES, TYPES, USERNAMES, and CONFIGS (non-secret stuff) are all preserved because those columns aren't encrypted. |
 
@@ -797,78 +797,109 @@ single integration point.
 
 Explicit non-goals, each with reasoning:
 
-### No TPM binding for `/etc/invenzo/age.key`
+### TPM binding for `/etc/invenzo/age.key` (opt-in, shipped)
 
-**What it would be:** seal the age private key to the host TPM so a
-disk clone of the key file by itself can't be used — the TPM has to be
+**What it does:** seals the age private key to the host TPM so a disk
+clone of the key file by itself can't be used — the TPM has to be
 physically present and in the expected state (PCR measurements).
 
-**Why not:** portability. Invenzo ships to customer-managed hosts with
-wildly inconsistent TPM support. VMs often don't have a usable TPM;
-cloud-provider TPMs have different programming models. A host-file key
-works uniformly on every target environment.
+**How:** opt-in helper [`bind-age-key-to-tpm.sh`](../invenzo-package/bind-age-key-to-tpm.sh)
+wraps the key with `systemd-creds encrypt --with-key=tpm2 --tpm2-pcrs=7`
+(Secure Boot state). Generates `/usr/local/bin/invenzo-tpm-decrypt-age-key`
++ `invenzo-age-key-tpm.service` (systemd oneshot, runs `Before=docker.service`)
+that decrypts to `/run/invenzo/age.key` (tmpfs) at boot. Customer flips
+`AGE_KEY_FILE=/run/invenzo/age.key` in `.env` after enrolling.
 
-**Chosen alternative:** strict permission (mode 400, root:root) on the
-key file + operational guidance to back it up offline. Acceptable
-because the threat model is "offline disk copy / backup tarball leaks",
-not "root-level host compromise".
+**Flags:** `--backup PATH` (offline unbound copy — STRONGLY recommended
+because a TPM chip failure with no backup means the credential vault is
+unrecoverable), `--rotate` (new keypair + bind), `--revert` (remove
+binding, key stays plaintext).
 
-**If a customer needs TPM** they write a thin Dockerfile on top of
-`invenzo-api` that sets up a `systemd-creds encrypt --tpm2` path and
-points `AGE_KEY_FILE` at the decrypted output. No app changes required.
+**When TPM is unavailable** (most VMs, some cloud providers), the script
+fails cleanly during pre-flight (`/dev/tpmrm0` not present OR
+`systemd-creds --with-key=tpm2` smoke-test fails). The default
+host-file path stays in place — TPM is opt-in per host, not a global
+requirement, so portability is preserved.
 
-### No auto-rotation schedule
+### Rotation reminders (shipped — auto-rotation still NOT built)
 
-**What it would be:** a Celery beat job that rotates the age key or
-individual secrets every N days.
+**What shipped:** per-secret `last_rotated_at` tracking with admin-
+configurable thresholds. Daily Celery beat task creates `security_alert`
+rows of type `secret_rotation_due_<name>` for any secret older than its
+threshold. Reminders surface on the Compliance dashboard so admins see
+their rotation cadence without manual log-trawling.
 
-**Why not:** rotation carries operational risk (a mid-rotation crash
-leaving half-old/half-new state requires manual repair). Compliance
-regimes (HIPAA, SOC 2, ISO 27001) require manual, logged rotation —
-not silent automation. Admins should rotate on their policy's schedule,
-with an audit trail.
+Endpoints (all admin-only):
+- `GET /api/v1/secrets/rotation/status` — per-secret age + overdue summary
+- `POST /api/v1/secrets/rotation/acknowledge/<name>` — admin rotates the
+  secret per [Section 6](#6-operations) recipe, then calls this to bump
+  `last_rotated_at = now()` and auto-resolve the open alert. NEVER
+  modifies the secret value.
+- `PUT /api/v1/secrets/rotation/policy/<name>` — adjust `max_age_days`
+- `PUT /api/v1/secrets/rotation/enabled` — master kill-switch
 
-**Chosen alternative:** documented one-shot rotation commands in
-[Section 6](#6-operations). Admins invoke them from change-management.
+Default thresholds: 365 days for `VAULT_KEY`, `SECRET_KEY`,
+`INTERNAL_API_SECRET`, `VAULT_ROOT_TOKEN`, `GRAFANA_ADMIN_PASSWORD`.
+730 days for `POSTGRES_PASSWORD` and `REDIS_PASSWORD` (internal-only,
+no external auth surface).
+
+**What's still NOT built — and won't be:** a Celery beat job that
+silently rotates secrets every N days. Compliance regimes (HIPAA,
+SOC 2, ISO 27001) require manual+logged rotation under change control.
+The reminder system surfaces the cadence; the admin still performs the
+rotation per [Section 6](#6-operations). Mid-rotation crashes leaving
+half-old/half-new state are easier to recover from when the change
+window is human-bounded.
 
 **VAULT_KEY** specifically has a different rotation story — the
 `VAULT_KEY_OLD` dual-key window in `credential_service.py` rotates
 stored credentials transparently as they're accessed.
 
-### No standalone `migrate-to-encrypted.sh` script
+### `migrate-to-encrypted.sh` standalone script (shipped v1.16.6+)
 
-**What it would be:** dedicated script customers run during upgrade to
-convert env-mode `.env` secrets to `./secrets/*.enc`.
+The env-mode → encrypted-mode migration now ships as a standalone
+script at [`invenzo-package/migrate-to-encrypted.sh`](../invenzo-package/migrate-to-encrypted.sh)
+with dry-run, backup, idempotency, and rollback flags:
 
-**Why not:** an inline 30-line bash block in
-[UPGRADE.md](UPGRADE.md) does the job with less surface area.
-A standalone script would need its own error handling, logging,
-rollback, `--dry-run` support — hundreds of lines for an operation each
-customer runs once. The inline block is easier to audit (customers
-paste it into a shell and read what it does) and easier to adapt to
-non-standard install paths.
+```bash
+# Preview without changing anything
+sudo bash migrate-to-encrypted.sh --dry-run
 
-**When this changes:** if >50 support tickets accumulate about migration
-failures, a formal script becomes worth the surface area.
+# Real run with rollback safety
+sudo bash migrate-to-encrypted.sh --backup ~/invenzo-env-pre-migrate.bak
 
-### No CI test coverage for the install-script flow
+# If the post-migration stack won't boot, undo in one command
+sudo bash migrate-to-encrypted.sh --rollback ~/invenzo-env-pre-migrate.bak
+```
 
-**What it would be:** GitHub Actions job that spins up a Linux container,
-runs `bash install.sh`, confirms the stack reaches healthy, reports
-pass/fail.
+The inline bash block in [UPGRADE.md](../invenzo-package/UPGRADE.md)
+remains as a fallback for customers on older install packages that
+don't ship the script. The two paths produce byte-identical post-
+migration state.
 
-**Why not:** the script is heavily interactive (prompts for admin
-password, hostname, confirmations), assumes root + Docker on the host,
-and needs a realistic matrix (Ubuntu 22.04 / Debian 12 / RHEL 9, with
-Docker 24 / 25, Podman / Docker). This isn't well-served by standard
-GitHub Actions runners. The 26 in-container tests already cover the
-`read_secret()` + preflight contract — which is where real bugs hide.
-The install script itself is bash glue; `bash -n install.sh` +
-`docker compose config --quiet` + one manual test run before each
-release is proportional coverage.
+### CI test coverage for the install-script flow (shipped)
 
-**When this changes:** if the project gains a dedicated CI fleet with
-reliable privileged-container support, a smoke test becomes worthwhile.
+**What it does:** two GitHub Actions workflows cover both cheap-and-fast
+static checks AND the heavy end-to-end install path.
+
+[install-script-lint.yml](../.github/workflows/install-script-lint.yml)
+runs on every PR — `bash -n` on all 7 shipped scripts (install / update /
+uninstall / recover-lost-age-key / bind-age-key-to-tpm / openbao-prod-
+entrypoint / decrypt-and-exec), shellcheck with the project's standard
+ignore list, `docker compose config --quiet` against a synthesised
+`.env`, and `helm lint` on the Kubernetes chart.
+
+[install-script-smoke.yml](../.github/workflows/install-script-smoke.yml)
+runs on push-to-master + weekly cron + manual dispatch. Builds the 3
+invenzo images locally, rewrites `registry="raguyazhin"` and
+`INVENZO_VERSION` in install.sh to point at the smoke tag, pre-pulls 8
+vendor images, runs `install.sh --offline` with the 4 interactive
+prompts piped via stdin. Asserts: completion banner reached, NO
+plaintext secrets in `.env`, all 8 `secrets/*.enc` non-empty, age key
+mode 400, admin password not visible verbatim in any `.enc` file, api
+`/api/v1/health` responds. Matrix: ubuntu-22.04 + ubuntu-24.04. A
+manual-dispatch DinD job exercises debian:12 + rockylinux:9 through OS
+detection + Docker-bootstrap on those distros.
 
 ### Other explicit non-goals
 
