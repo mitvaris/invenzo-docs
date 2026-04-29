@@ -27,7 +27,23 @@ Invenzo uses two GitHub repositories to keep source code protected while making 
 | 📦 **invenzo-package** | [github.com/raguyazhin/invenzo-package](https://github.com/raguyazhin/invenzo-package) | 🌐 Public | Customers installing / upgrading | `install.sh`, `update.sh`, `docker-compose.yml`, Caddyfile — **no source code**. Pulls pre-built Docker images from Docker Hub. |
 | 🔒 **Invenzo** | [github.com/raguyazhin/Invenzo](https://github.com/raguyazhin/Invenzo) | 🔐 Private | Developers (you) | Full source code for API, UI, discovery engine, Go agent. Licensed commercial software. |
 
-**Customers receive bytecode-only images.** `install.sh` from the public `invenzo-package` repo pulls pre-built Docker images (`raguyazhin/invenzo-api`, `-discovery`, `-ui`) from Docker Hub. The production images contain `.pyc` bytecode (compiled from `.py` via `python -m compileall`, with raw `.py` source stripped), minified UI bundles, and static Go binaries. Bytecode is a casual-browsing deterrent — the primary IP-protection layer is the commercial license agreement plus Ed25519-signed module licenses.
+**Customers receive pre-built Docker images.** `install.sh` from the public `invenzo-package` repo pulls images (`raguyazhin/invenzo-api`, `-discovery`, `-ui`) from Docker Hub. The images contain plain Python source, minified UI bundles, and static Go binaries. The IP-protection layer is the [commercial license agreement](https://github.com/raguyazhin/invenzo-package/blob/main/LICENSE) plus Ed25519-signed module licenses — not source obfuscation, which provides no real protection against decompilation.
+
+---
+
+## Evaluating Invenzo? Read these first
+
+Before you install or pay anything, three short pages tell you whether Invenzo fits your situation. We'd rather lose a sale than win a wrong-fit support ticket.
+
+<p>
+  <a href="WHO_IS_THIS_FOR.md" style="background:#9333EA;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;margin-right:8px;margin-bottom:8px;">🎯 Who is this for?</a>
+  <a href="PRICING.md" style="background:#9333EA;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;margin-right:8px;margin-bottom:8px;">💰 Pricing</a>
+  <a href="WHO_THIS_ISNT_FOR.md" style="background:#475569;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;margin-bottom:8px;">⚠️ Who this isn't for</a>
+</p>
+
+* **[Who is this for?](WHO_IS_THIS_FOR.md)** — 5-question fit check. Answer "yes" to ≥4 and Invenzo is built for you.
+* **[Pricing](PRICING.md)** — Three tiers, all annual, prices on the page. Starter $4,800/yr · Professional $14,400/yr · Enterprise $36,000/yr.
+* **[Who this isn't for](WHO_THIS_ISNT_FOR.md)** — Hard disqualifiers + alternative tools we'd point you at instead.
 
 ---
 
@@ -173,6 +189,12 @@ No SSH, no SQL, no guessing.
 
 | | |
 |---|---|
+| 🎯 Who is this for? | [WHO_IS_THIS_FOR.md](WHO_IS_THIS_FOR.md) |
+| 💰 Pricing | [PRICING.md](PRICING.md) |
+| ⚠️ Who this isn't for | [WHO_THIS_ISNT_FOR.md](WHO_THIS_ISNT_FOR.md) |
+| ⚡ Performance & scale benchmarks | [BENCHMARKS.md](BENCHMARKS.md) |
+| 🏗️ HA reference architecture | [HA_ARCHITECTURE.md](HA_ARCHITECTURE.md) |
+| 🚨 Disaster runbook | [DISASTER_RUNBOOK.md](DISASTER_RUNBOOK.md) |
 | 📦 Install package (public) | [github.com/raguyazhin/invenzo-package](https://github.com/raguyazhin/invenzo-package) |
 | 🔒 Source code (private) | [github.com/raguyazhin/Invenzo](https://github.com/raguyazhin/Invenzo) |
 | 📖 Full deployment guide | [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) |

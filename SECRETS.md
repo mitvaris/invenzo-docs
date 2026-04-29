@@ -20,7 +20,7 @@ This document is the single source of truth. It covers:
 6. [Operations — rotation, backup, verification, preflight](#6-operations)
 7. [**Recovery from a lost age key — complete procedure**](#7-recovery-from-a-lost-age-key)
 8. [Migration from legacy modes (env / files)](#8-migration-from-legacy-modes)
-9. [SaaS path — what the remote-provider tier looks like](#9-saas-path)
+9. [Remote secret providers — Vault / AWS Secrets Manager / Azure Key Vault](#9-remote-secret-providers)
 10. [What was NOT built and why](#10-what-was-not-built-and-why)
 11. [FAQ](#11-faq)
 
@@ -758,38 +758,47 @@ older Invenzo version.
 
 ---
 
-## 9. SaaS path
+## 9. Remote secret providers
 
-When Invenzo becomes a SaaS product, secrets move to a remote provider
-(HashiCorp Vault, AWS Secrets Manager, Azure Key Vault). The
-application-side code is already ready — stubs exist in
-[api/app/secret_provider.py](../api/app/secret_provider.py):
+> **Strategic note (v1.15.6+):** Invenzo is **single-tenant on-prem only** — there is no Mitvaris-managed SaaS, and one install always equals one customer. This section is for **on-prem customers who already run Vault / AWS Secrets Manager / Azure Key Vault** internally and want Invenzo to fetch its secrets from there instead of (or in addition to) the age-encrypted file path. It is NOT framing for a future SaaS migration; that path has been deliberately declined. See [WHO_THIS_ISNT_FOR.md](WHO_THIS_ISNT_FOR.md) and [PRICING.md](PRICING.md) for the full positioning.
 
-```python
-def _read_from_vault(name: str) -> str | None:
-    raise NotImplementedError(...)
+For customers running their own Vault / AWS Secrets Manager / Azure Key
+Vault, Invenzo can fetch secrets from any of these at startup instead
+of (or in addition to) the local age-encrypted file path. Wiring is
+already in place at
+[api/app/secret_provider.py](../api/app/secret_provider.py).
 
-def _read_from_aws_sm(name: str) -> str | None:
-    raise NotImplementedError(...)
+**Configuration (env var on api + worker pods):**
 
-def _read_from_azure_kv(name: str) -> str | None:
-    raise NotImplementedError(...)
+```bash
+SECRETS_PROVIDER=vault         # Hashicorp Vault / OpenBao
+# or
+SECRETS_PROVIDER=aws_sm        # AWS Secrets Manager
+# or
+SECRETS_PROVIDER=azure_kv      # Azure Key Vault
 ```
 
-SaaS day-1 work:
+**Per-provider config:**
 
-1. Implement the three stubs (~30 lines each using native SDK)
-2. Add `SECRETS_PROVIDER=vault|aws_sm|azure_kv` env var dispatch in `read_secret()`
-3. Add a startup hook for provider authentication (AppRole for Vault,
-   IAM role for AWS, Managed Identity for Azure)
-4. Add in-memory TTL cache (~30s) so each request doesn't hit the
-   provider's API
-5. Optional: multi-tenancy — add `tenant_id` contextvar + per-tenant secret paths
+| Provider | Env vars | Auth methods (priority order) | Path layout |
+|---|---|---|---|
+| `vault` | `VAULT_ADDR`, optionally `VAULT_NAMESPACE`, `VAULT_KV_MOUNT` (default `secret`) | `VAULT_TOKEN` → `VAULT_ROLE_ID` + `VAULT_SECRET_ID` (AppRole) → `VAULT_KUBE_ROLE` (Kubernetes SA token) | KV-v2 secret at `<prefix><name>` with a `value` field |
+| `aws_sm` | `AWS_REGION` (or `AWS_DEFAULT_REGION`) | Default boto3 cred chain (IAM role / env / profile) | `SecretId=<prefix><name>`, `SecretString` returned verbatim |
+| `azure_kv` | `AZURE_KEYVAULT_URI` | `DefaultAzureCredential` (env / managed identity / CLI) | Secret name = `<prefix><name>` with `_`/`/`/`.` translated to `-` |
 
-Every existing call site in the app (`backup_service.py`,
-`vault_service.py`, all discovery task files, `config.py`, `celery_app.py`,
-`pinger.py`) continues to work without changes — `read_secret()` is the
-single integration point.
+Optional shared env: `SECRETS_PROVIDER_PREFIX` (path prefix applied to every secret name), `SECRETS_PROVIDER_CACHE_TTL` (per-process LRU cache TTL in seconds, default 30).
+
+**Resolution order:** `read_secret(name)` checks **file** → **env var** → **remote provider** → **default**. The age-encrypted file path is still primary; the remote provider is a fallback only invoked when the file isn't present. This means existing installs work unchanged; opt-in by mounting fewer secret files and letting the remote provider serve the rest.
+
+**Optional SDK packaging:** the optional libs (`hvac`, `boto3`, `azure-identity`, `azure-keyvault-secrets`) are commented out in [api/requirements.txt](../api/requirements.txt) so the base image stays lean. Customers using a remote provider either uncomment the relevant block + rebuild, or `pip install` at container start. The provider implementations import the SDK lazily so an unset `SECRETS_PROVIDER` never pays the import cost.
+
+**Failure semantics:**
+* Provider misconfigured (e.g. `SECRETS_PROVIDER=vault` but no `VAULT_ADDR`) → `RuntimeError` at startup. NOT silently logged.
+* SDK missing → `RuntimeError` with the exact `pip install` line to fix.
+* Secret not found in remote → returns `None`, caller falls back to default.
+* Transient network/auth error → logged at WARNING (without leaking the secret value), returns `None`.
+
+Every existing call site in the app (`backup_service.py`, `vault_service.py`, all discovery task files, `config.py`, `celery_app.py`, `pinger.py`) works unchanged — `read_secret()` is the single integration point.
 
 ---
 
@@ -904,7 +913,8 @@ detection + Docker-bootstrap on those distros.
 ### Other explicit non-goals
 
 - **No secret-access audit log.** No "who read VAULT_KEY at timestamp X"
-  trail. OpenBao in production mode fills that gap — see the SaaS path.
+  trail. Customers running Vault / OpenBao in production mode get this
+  for free at the provider side — see [§ 9 Remote secret providers](#9-remote-secret-providers).
 - **No Windows dev parity for the master-key path.** Dev on Windows
   keeps the age key in the repo root (`.age-key`, gitignored). Linux
   prod uses `/etc/invenzo/age.key`. The `AGE_KEY_FILE` env var bridges
