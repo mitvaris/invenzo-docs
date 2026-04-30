@@ -169,7 +169,7 @@ Inside each service container at boot:
 
 ```bash
 # On a fresh Linux host, as root:
-git clone https://github.com/raguyazhin/invenzo-package.git
+git clone https://github.com/mitvaris/invenzo-package.git
 cd invenzo-package
 sudo bash install.sh
 ```
@@ -252,7 +252,7 @@ Step 9: Scrub shell variables
   now means later shell traces or crash dumps won't contain them.
 
 Step 10: Write .env with non-secret config only
-  - REGISTRY=raguyazhin
+  - REGISTRY=ghcr.io/mitvaris
   - VERSION=<install.sh's INVENZO_VERSION constant>
   - AGE_KEY_FILE=/etc/invenzo/age.key
   - ALLOWED_HOST=<user's hostname>
@@ -900,7 +900,7 @@ ignore list, `docker compose config --quiet` against a synthesised
 
 [install-script-smoke.yml](../.github/workflows/install-script-smoke.yml)
 runs on push-to-master + weekly cron + manual dispatch. Builds the 3
-invenzo images locally, rewrites `registry="raguyazhin"` and
+invenzo images locally, rewrites `registry="ghcr.io/mitvaris"` and
 `INVENZO_VERSION` in install.sh to point at the smoke tag, pre-pulls 8
 vendor images, runs `install.sh --offline` with the 4 interactive
 prompts piped via stdin. Asserts: completion banner reached, NO

@@ -8,7 +8,7 @@ description: Step-by-step recovery procedures for common failure modes — Postg
 
 When something goes wrong at 3am, you don't want to be reading architecture docs. This page is the **recipe-book** — find the failure that matches what you're seeing, follow the steps.
 
-Every procedure here has been tested on a fresh install. If you find one that doesn't work in your environment, [open an issue](https://github.com/raguyazhin/invenzo-package/issues).
+Every procedure here has been tested on a fresh install. If you find one that doesn't work in your environment, [open an issue](https://github.com/mitvaris/invenzo-package/issues).
 
 <small>© <a href="https://mitvaris.com">Mitvaris</a>. All rights reserved.</small>
 
@@ -434,7 +434,7 @@ wal-g backup-fetch /var/lib/postgresql/data LATEST --target-time "2026-04-29T03:
 
 * **For Enterprise tier customers:** [contact Mitvaris](https://mitvaris.com) — same-business-day video call response. We've seen most of these before.
 * **For Professional tier:** email support, 1-business-day response.
-* **For Starter tier / open-source path:** [open a GitHub issue](https://github.com/raguyazhin/invenzo-package/issues) — best-effort response, no SLA.
+* **For Starter tier / open-source path:** [open a GitHub issue](https://github.com/mitvaris/invenzo-package/issues) — best-effort response, no SLA.
 
 ---
 

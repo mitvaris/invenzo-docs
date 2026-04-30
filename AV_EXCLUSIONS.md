@@ -376,7 +376,7 @@ The following may help your AV administrator approve the exclusions:
 ## Getting help
 
 - **Invenzo admin** (the person who gave you this document): ask them to submit the binary to your AV vendor as a false positive — this whitelists by hash globally so future endpoints at other customers with the same AV don't hit the same issue.
-- **Documentation**: https://raguyazhin.github.io/invenzo-docs/
+- **Documentation**: https://mitvaris.github.io/invenzo-docs/
 - **Agent deployment guide**: [DEPLOYMENT_GUIDE.md — Agent Deployment](DEPLOYMENT_GUIDE.md#g-agent-deployment)
 
 ---

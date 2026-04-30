@@ -138,7 +138,7 @@ No, it's per-tier with an endpoint ceiling. If you outgrow your tier mid-year, w
 The Invenzo install keeps running. Modules using paid features will display a banner asking you to renew. No data is deleted, no rows go missing — we're not in the business of holding your inventory hostage.
 
 **Is the source code open?**
-No. Invenzo is commercial software under a [restrictive license](https://github.com/raguyazhin/invenzo-package/blob/main/LICENSE). The customer install bundle is open, the source is not.
+No. Invenzo is commercial software under a [restrictive license](https://github.com/mitvaris/invenzo-package/blob/main/LICENSE). The customer install bundle is open, the source is not.
 
 **Can I see the source as a customer?**
 On Enterprise tier with NDA, yes. On Starter / Professional, no.

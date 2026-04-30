@@ -356,7 +356,7 @@ For any of these, [contact Mitvaris](https://mitvaris.com) — we do consulting 
 
 * [Disaster runbook](DISASTER_RUNBOOK.md) — what to do when Postgres dies / VAULT_KEY is corrupted / all agents go offline at once.
 * [Pricing](PRICING.md) — Enterprise tier includes a 4-hour HA architecture review with Mitvaris.
-* [Helm chart README](https://github.com/raguyazhin/Invenzo/blob/master/charts/invenzo/README.md) — chart-specific knobs not documented here.
+* [Helm chart README](https://github.com/mitvaris/invenzo/blob/master/charts/invenzo/README.md) — chart-specific knobs not documented here.
 
 ---
 

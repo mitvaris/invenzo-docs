@@ -82,6 +82,6 @@ If your primary use case is in this list, Invenzo is wrong-tool. See [Who this i
 
 * [See pricing](PRICING.md) — three tiers, all annual, prices on the page.
 * [Read the deployment guide](DEPLOYMENT_GUIDE.md) — install in 30 minutes on Ubuntu 22.04+.
-* [Try the install package](https://github.com/raguyazhin/invenzo-package) — runs in your environment, your data never leaves your network.
+* [Try the install package](https://github.com/mitvaris/invenzo-package) — runs in your environment, your data never leaves your network.
 
 If you read this page and you fit, [contact Mitvaris](https://mitvaris.com) for a guided pilot.

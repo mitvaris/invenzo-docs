@@ -13,7 +13,7 @@ Network discovery · Asset inventory · Software asset management · Compliance 
 
 <p>
   <a href="DEPLOYMENT_GUIDE.md" style="background:#1FCC7A;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;margin-right:8px;">📖 Full Deployment Guide</a>
-  <a href="https://github.com/raguyazhin/invenzo-package" style="background:#333;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;">📦 Install Package</a>
+  <a href="https://github.com/mitvaris/invenzo-package" style="background:#333;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;">📦 Install Package</a>
 </p>
 
 ---
@@ -24,10 +24,10 @@ Invenzo uses two GitHub repositories to keep source code protected while making 
 
 | Repo | URL | Visibility | Who uses it | What it contains |
 |---|---|---|---|---|
-| 📦 **invenzo-package** | [github.com/raguyazhin/invenzo-package](https://github.com/raguyazhin/invenzo-package) | 🌐 Public | Customers installing / upgrading | `install.sh`, `update.sh`, `docker-compose.yml`, Caddyfile — **no source code**. Pulls pre-built Docker images from Docker Hub. |
-| 🔒 **Invenzo** | [github.com/raguyazhin/Invenzo](https://github.com/raguyazhin/Invenzo) | 🔐 Private | Developers (you) | Full source code for API, UI, discovery engine, Go agent. Licensed commercial software. |
+| 📦 **invenzo-package** | [github.com/mitvaris/invenzo-package](https://github.com/mitvaris/invenzo-package) | 🌐 Public | Customers installing / upgrading | `install.sh`, `update.sh`, `docker-compose.yml`, Caddyfile — **no source code**. Pulls pre-built Docker images from Docker Hub. |
+| 🔒 **Invenzo** | [github.com/mitvaris/invenzo](https://github.com/mitvaris/invenzo) | 🔐 Private | Developers (you) | Full source code for API, UI, discovery engine, Go agent. Licensed commercial software. |
 
-**Customers receive pre-built Docker images.** `install.sh` from the public `invenzo-package` repo pulls images (`raguyazhin/invenzo-api`, `-discovery`, `-ui`) from Docker Hub. The images contain plain Python source, minified UI bundles, and static Go binaries. The IP-protection layer is the [commercial license agreement](https://github.com/raguyazhin/invenzo-package/blob/main/LICENSE) plus Ed25519-signed module licenses — not source obfuscation, which provides no real protection against decompilation.
+**Customers receive pre-built Docker images.** `install.sh` from the public `invenzo-package` repo pulls images (`ghcr.io/mitvaris/invenzo-api`, `-discovery`, `-ui`) from Docker Hub. The images contain plain Python source, minified UI bundles, and static Go binaries. The IP-protection layer is the [commercial license agreement](https://github.com/mitvaris/invenzo-package/blob/main/LICENSE) plus Ed25519-signed module licenses — not source obfuscation, which provides no real protection against decompilation.
 
 ---
 
@@ -55,7 +55,7 @@ Before you install or pay anything, three short pages tell you whether Invenzo f
 
 ```bash
 # 1. Clone the public install package (no source code, just deployment scripts)
-git clone https://github.com/raguyazhin/invenzo-package.git /tmp/invenzo-package
+git clone https://github.com/mitvaris/invenzo-package.git /tmp/invenzo-package
 cd /tmp/invenzo-package
 
 # 2. Run the installer
@@ -80,7 +80,7 @@ cd /opt/invenzo
 sudo bash update.sh 1.9.3
 ```
 
-Your `.env` secrets stay untouched — only the `VERSION=` line is updated. Full details: [UPGRADE.md](https://github.com/raguyazhin/invenzo-package/blob/main/UPGRADE.md)
+Your `.env` secrets stay untouched — only the `VERSION=` line is updated. Full details: [UPGRADE.md](https://github.com/mitvaris/invenzo-package/blob/main/UPGRADE.md)
 
 ---
 
@@ -106,7 +106,7 @@ From the **Agents page** in the Invenzo UI:
 **First clone on a new laptop:**
 
 ```bash
-git clone https://github.com/raguyazhin/Invenzo.git
+git clone https://github.com/mitvaris/invenzo.git
 cd Invenzo
 bash bootstrap-dev.sh           # generates .env with random secrets + admin password
 docker compose up -d --build    # builds images locally from source
@@ -132,13 +132,13 @@ Full details: [Developer Setup](DEPLOYMENT_GUIDE.md#a-developer--first-install)
 
 ## Latest release
 
-**v1.9.3** — *2026-04-22* — Security hardening (internal-API secret, webhook TLS verify, dep bumps).
+**v1.15.29** — *2026-04-30* — Test infrastructure cleanup, classifier fix, change_management.delete permission.
 
-Docker Hub images (pull with `docker pull raguyazhin/<name>:1.9.3`):
+GitHub Container Registry images (pull with `docker pull ghcr.io/mitvaris/<name>:1.15.29`):
 
-- [`raguyazhin/invenzo-api`](https://hub.docker.com/r/raguyazhin/invenzo-api)
-- [`raguyazhin/invenzo-discovery`](https://hub.docker.com/r/raguyazhin/invenzo-discovery)
-- [`raguyazhin/invenzo-ui`](https://hub.docker.com/r/raguyazhin/invenzo-ui)
+- [`ghcr.io/mitvaris/invenzo-api`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-api)
+- [`ghcr.io/mitvaris/invenzo-discovery`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-discovery)
+- [`ghcr.io/mitvaris/invenzo-ui`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-ui)
 
 ### What's new in 1.9.3
 
@@ -195,14 +195,14 @@ No SSH, no SQL, no guessing.
 | ⚡ Performance & scale benchmarks | [BENCHMARKS.md](BENCHMARKS.md) |
 | 🏗️ HA reference architecture | [HA_ARCHITECTURE.md](HA_ARCHITECTURE.md) |
 | 🚨 Disaster runbook | [DISASTER_RUNBOOK.md](DISASTER_RUNBOOK.md) |
-| 📦 Install package (public) | [github.com/raguyazhin/invenzo-package](https://github.com/raguyazhin/invenzo-package) |
-| 🔒 Source code (private) | [github.com/raguyazhin/Invenzo](https://github.com/raguyazhin/Invenzo) |
+| 📦 Install package (public) | [github.com/mitvaris/invenzo-package](https://github.com/mitvaris/invenzo-package) |
+| 🔒 Source code (private) | [github.com/mitvaris/invenzo](https://github.com/mitvaris/invenzo) |
 | 📖 Full deployment guide | [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) |
 | 🔐 Secrets: storage, install flow, runtime, recovery | [SECRETS.md](SECRETS.md) |
 | 🔑 SSO setup: Google · Azure AD · Okta · OIDC · SAML · LDAP | [SSO.md](SSO.md) |
 | 🛡️ AV / EDR exclusions (hand to customer's AV admin) | [AV_EXCLUSIONS.md](AV_EXCLUSIONS.md) |
 | 🎨 UI design reference | [UI_DESIGN_GUIDE.md](UI_DESIGN_GUIDE.md) |
-| 🐳 Docker Hub | [hub.docker.com/u/raguyazhin](https://hub.docker.com/u/raguyazhin) |
+| 🐳 Docker Hub | [github.com/orgs/mitvaris/packages](https://github.com/orgs/mitvaris/packages) |
 
 ---
 

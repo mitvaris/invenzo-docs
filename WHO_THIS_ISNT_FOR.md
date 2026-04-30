@@ -67,7 +67,7 @@ If a future ask materially changes this, it will be announced on the [docs site]
 
 ### 6. You're a managed service provider (MSP) wanting to host Invenzo for your customers
 
-**Why it doesn't fit:** Invenzo is **single-tenant by design — one install per customer, on the customer's own on-prem machine or their own cloud cluster.** The data model has no tenant isolation, the secrets layer is single-tenant, and the [LICENSE](https://github.com/raguyazhin/invenzo-package/blob/main/LICENSE) explicitly forbids MSP / SaaS hosting. This is not a v1 limitation that goes away later — it's a deliberate strategic choice. We will not build multi-tenancy or a managed-hosting model.
+**Why it doesn't fit:** Invenzo is **single-tenant by design — one install per customer, on the customer's own on-prem machine or their own cloud cluster.** The data model has no tenant isolation, the secrets layer is single-tenant, and the [LICENSE](https://github.com/mitvaris/invenzo-package/blob/main/LICENSE) explicitly forbids MSP / SaaS hosting. This is not a v1 limitation that goes away later — it's a deliberate strategic choice. We will not build multi-tenancy or a managed-hosting model.
 
 If you're an MSP wanting to manage Invenzo installs **on each of your customers' own infrastructure** (one install per customer, you operate them remotely with a per-customer license), that's a different conversation — [contact Mitvaris](https://mitvaris.com) about a partner agreement. Same product, customer-owned infrastructure, you billed for the operations layer.
 

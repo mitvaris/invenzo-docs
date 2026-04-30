@@ -16,7 +16,7 @@ How fast is Invenzo at real scale? This page publishes numbers we'd stand behind
 
 ## Test corpus
 
-We seed **10,000 synthetic assets** into a fresh PostgreSQL database, then run the most common asset-list / search / filter queries 50 times each. The seed script ([`api/tests/scale/seed.py`](https://github.com/raguyazhin/Invenzo/blob/master/api/tests/scale/seed.py)) generates a realistic mix:
+We seed **10,000 synthetic assets** into a fresh PostgreSQL database, then run the most common asset-list / search / filter queries 50 times each. The seed script ([`api/tests/scale/seed.py`](https://github.com/mitvaris/invenzo/blob/master/api/tests/scale/seed.py)) generates a realistic mix:
 
 | Asset type | Share |
 |---|---|

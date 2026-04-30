@@ -2,7 +2,7 @@
 
 Everything you need to install, update, or develop Invenzo — on any machine.
 
-**Public docs**: https://raguyazhin.github.io/invenzo-docs/
+**Public docs**: https://mitvaris.github.io/invenzo-docs/
 
 ---
 
@@ -10,11 +10,11 @@ Everything you need to install, update, or develop Invenzo — on any machine.
 
 | Purpose | Repo | URL | Who |
 |---|---|---|---|
-| 📦 **Install / upgrade package** | `invenzo-package` (public) | https://github.com/raguyazhin/invenzo-package | Customers |
-| 🔒 **Source code** | `Invenzo` (private) | https://github.com/raguyazhin/Invenzo | Developers |
-| 📖 **Documentation** | `invenzo-docs` (public, GitHub Pages) | https://raguyazhin.github.io/invenzo-docs/ | Everyone |
+| 📦 **Install / upgrade package** | `invenzo-package` (public) | https://github.com/mitvaris/invenzo-package | Customers |
+| 🔒 **Source code** | `Invenzo` (private) | https://github.com/mitvaris/invenzo | Developers |
+| 📖 **Documentation** | `invenzo-docs` (public, GitHub Pages) | https://mitvaris.github.io/invenzo-docs/ | Everyone |
 
-Customers **never** need access to the private source repo — they pull pre-built Docker images directly from Docker Hub (`raguyazhin/invenzo-api`, `-discovery`, `-ui`). The Python containers ship `.pyc` bytecode (the `.py` source files are stripped from the image — a casual-browsing deterrent only, since `.pyc` is decompilable); UI ships a minified JS bundle; the agent ships a static Go binary. The actual IP protection is the [commercial license](https://github.com/raguyazhin/Invenzo/blob/master/LICENSE), Ed25519-signed module licenses (LicenseForge holds the private key), and the private Docker registry with revocable per-customer pull tokens — not the bytecode format itself.
+Customers **never** need access to the private source repo — they pull pre-built Docker images directly from Docker Hub (`ghcr.io/mitvaris/invenzo-api`, `-discovery`, `-ui`). The Python containers ship `.pyc` bytecode (the `.py` source files are stripped from the image — a casual-browsing deterrent only, since `.pyc` is decompilable); UI ships a minified JS bundle; the agent ships a static Go binary. The actual IP protection is the [commercial license](https://github.com/mitvaris/invenzo/blob/master/LICENSE), Ed25519-signed module licenses (LicenseForge holds the private key), and the private Docker registry with revocable per-customer pull tokens — not the bytecode format itself.
 
 ---
 
@@ -38,7 +38,7 @@ Customers **never** need access to the private source repo — they pull pre-bui
 
 ```bash
 # 1. Clone the private source repo
-git clone https://github.com/raguyazhin/Invenzo.git d:/Invenzo
+git clone https://github.com/mitvaris/invenzo.git d:/Invenzo
 cd d:/Invenzo
 
 # 2. Bootstrap: generates age keypair (./.age-key), encrypts 8 secrets
@@ -87,7 +87,7 @@ docker compose up -d --build api
 ```bash
 # 1. Clone the PUBLIC install package (no source code, just deployment scripts)
 cd /tmp
-git clone https://github.com/raguyazhin/invenzo-package.git
+git clone https://github.com/mitvaris/invenzo-package.git
 cd invenzo-package
 
 # 2. Run the installer
@@ -116,12 +116,12 @@ On an internet-connected machine:
 ```bash
 # Pull and save images
 for img in invenzo-api invenzo-discovery invenzo-ui; do
-  docker pull raguyazhin/$img:1.8.3
-  docker save raguyazhin/$img:1.8.3 | gzip > $img-1.8.3.tar.gz
+  docker pull ghcr.io/mitvaris/$img:1.15.29
+  docker save ghcr.io/mitvaris/$img:1.15.29 | gzip > $img-1.15.29.tar.gz
 done
 
 # Download the package
-git clone https://github.com/raguyazhin/invenzo-package.git
+git clone https://github.com/mitvaris/invenzo-package.git
 tar czf invenzo-package.tar.gz invenzo-package/
 ```
 
@@ -177,7 +177,7 @@ all non-secret `.env` config alone. See
 
 **Upgrading from an older install still using plaintext `.env` secrets?**
 Run the one-shot migration block at the top of
-[UPGRADE.md](https://github.com/raguyazhin/invenzo-package/blob/main/UPGRADE.md)
+[UPGRADE.md](https://github.com/mitvaris/invenzo-package/blob/main/UPGRADE.md)
 BEFORE `update.sh`. It converts each `.env` secret to `./secrets/*.enc`
 and generates the age keypair at `/etc/invenzo/age.key`.
 
@@ -341,8 +341,8 @@ docker compose up -d --build api
 ### Can't pull images (customer install)
 
 ```bash
-curl -sI https://hub.docker.com/ | head -1   # expect HTTP/2 200
-docker pull raguyazhin/invenzo-api:1.8.3
+curl -sI https://ghcr.io/ | head -1   # expect HTTP/2 200
+docker pull ghcr.io/mitvaris/invenzo-api:1.15.29
 ```
 
 ### Reset everything (DEV ONLY — destroys data)
@@ -489,7 +489,7 @@ Some antivirus and EDR products (Defender, CrowdStrike, SentinelOne, Sophos, Bit
 |---|---|
 | Developer first install | `git clone <private> && bash bootstrap-dev.sh && docker compose up -d --build` |
 | Developer daily update | `git pull && docker compose up -d --build` |
-| Customer fresh install | `git clone https://github.com/raguyazhin/invenzo-package.git && cd invenzo-package && sudo bash install.sh` |
+| Customer fresh install | `git clone https://github.com/mitvaris/invenzo-package.git && cd invenzo-package && sudo bash install.sh` |
 | Customer upgrade | `cd /opt/invenzo && sudo bash update.sh <version>` |
 | Release new version | `bash scripts/bump-version.sh patch --all` |
 | Verify version / schema | Open **Settings → Version & Schema** tab |
@@ -500,10 +500,10 @@ Some antivirus and EDR products (Defender, CrowdStrike, SentinelOne, Sophos, Bit
 
 ## Links
 
-- **Install package (public)**: https://github.com/raguyazhin/invenzo-package
-- **Source code (private)**: https://github.com/raguyazhin/Invenzo
-- **Documentation (this site)**: https://raguyazhin.github.io/invenzo-docs/
-- **Docker Hub**: https://hub.docker.com/u/raguyazhin
+- **Install package (public)**: https://github.com/mitvaris/invenzo-package
+- **Source code (private)**: https://github.com/mitvaris/invenzo
+- **Documentation (this site)**: https://mitvaris.github.io/invenzo-docs/
+- **Docker Hub**: https://github.com/orgs/mitvaris/packages
 
 ---
 
