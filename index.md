@@ -132,13 +132,24 @@ Full details: [Developer Setup](DEPLOYMENT_GUIDE.md#a-developer--first-install)
 
 ## Latest release
 
-**v1.15.29** — *2026-04-30* — Test infrastructure cleanup, classifier fix, change_management.delete permission.
+**v1.15.35** — *2026-05-06* — Real client IP on Sessions table, clearable nullable FKs, agent-rollout duplicate-paused fix, login branding polish.
 
-GitHub Container Registry images (pull with `docker pull ghcr.io/mitvaris/<name>:1.15.29`):
+GitHub Container Registry images (pull with `docker pull ghcr.io/mitvaris/<name>:1.15.35`):
 
 - [`ghcr.io/mitvaris/invenzo-api`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-api)
 - [`ghcr.io/mitvaris/invenzo-discovery`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-discovery)
 - [`ghcr.io/mitvaris/invenzo-ui`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-ui)
+- [`ghcr.io/mitvaris/invenzo-updater`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-updater)
+
+### What's new in 1.15.35
+
+- **Sessions table shows the real client IP** — previously every row read `10.201.0.3` (the UI container's bridge address) regardless of which device the user actually signed in from. The login / session / audit code paths now read the original client IP via `X-Forwarded-For` / `X-Real-IP` (set by Caddy → nginx automatically). Affects Settings → Security → Sessions and the audit log.
+- **Browser column on Sessions** parses the User-Agent into a short label (`Chrome · Windows 10/11`, `Safari · macOS`, `Script / API` for curl/wget/scripts). Raw UA preserved on hover for support engineers.
+- **Vendor / Location / Team / Parent fields can now be cleared** — the Vendor & Ownership Save button on asset detail used to look successful but silently keep the old value when you tried to clear a nullable FK. Fixed: clearing the dropdown now writes `NULL` to the DB.
+- **Agent rollout duplicates fixed** — the auto-detector no longer creates a fresh duplicate rollout every 5-minute tick when an existing one is in `paused` or `in_canary` state. Stale targets pointing at dead registrations are also skipped (drift count + child enrollment now agree).
+- **Login page polish** — wordmark sized up, gradient line "True oversight." gets proper breathing room, sidebar wordmark renders at natural PNG dimensions.
+
+Upgrade: `sudo bash update.sh 1.15.35` — no manual migration required.
 
 ### What's new in 1.9.3
 

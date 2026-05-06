@@ -115,9 +115,9 @@ On an internet-connected machine:
 
 ```bash
 # Pull and save images
-for img in invenzo-api invenzo-discovery invenzo-ui; do
-  docker pull ghcr.io/mitvaris/$img:1.15.29
-  docker save ghcr.io/mitvaris/$img:1.15.29 | gzip > $img-1.15.29.tar.gz
+for img in invenzo-api invenzo-discovery invenzo-ui invenzo-updater; do
+  docker pull ghcr.io/mitvaris/$img:1.15.35
+  docker save ghcr.io/mitvaris/$img:1.15.35 | gzip > $img-1.15.35.tar.gz
 done
 
 # Download the package
@@ -342,7 +342,7 @@ docker compose up -d --build api
 
 ```bash
 curl -sI https://ghcr.io/ | head -1   # expect HTTP/2 200
-docker pull ghcr.io/mitvaris/invenzo-api:1.15.29
+docker pull ghcr.io/mitvaris/invenzo-api:1.15.35
 ```
 
 ### Reset everything (DEV ONLY — destroys data)
