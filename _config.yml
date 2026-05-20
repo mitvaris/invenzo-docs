@@ -1,10 +1,5 @@
 # Jekyll config for GitHub Pages
-# See https://jekyllrb.com/docs/configuration/ for options
 
 title: Invenzo ITAM
-description: Self-hosted IT Asset Management — deployment and upgrade guide
+description: On-premises ITAM, discovery, CMDB, SAM, and reporting documentation
 theme: jekyll-theme-cayman
-
-# Don't list these helper files in "recent posts"
-exclude:
-  - COMPLETE_TEST_CASES.md

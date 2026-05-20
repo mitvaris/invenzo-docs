@@ -1,222 +1,92 @@
 ---
 layout: default
-title: Invenzo ITAM — Documentation
-description: Self-hosted IT Asset Management
+title: Invenzo ITAM Documentation
+description: On-premises ITAM, discovery, CMDB, SAM, and reporting documentation
 ---
 
-# Invenzo ITAM
+# Invenzo ITAM Documentation
 
-**Self-hosted IT Asset Management platform.**
-Network discovery · Asset inventory · Software asset management · Compliance · Agent deployment · Change management.
+Invenzo is an on-premises IT asset management platform for discovery,
+inventory, CMDB relationships, software asset management, agent lifecycle,
+compliance evidence, and executive reporting.
+
+It is designed for customers who want to keep discovery data, credentials,
+inventory, and reporting inside their own network instead of running ITAM as a
+SaaS product.
 
 <small>© <a href="https://mitvaris.com">Mitvaris</a>. All rights reserved.</small>
 
-<p>
-  <a href="DEPLOYMENT_GUIDE.md" style="background:#1FCC7A;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;margin-right:8px;">📖 Full Deployment Guide</a>
-  <a href="https://github.com/mitvaris/invenzo-package" style="background:#333;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;">📦 Install Package</a>
-</p>
+---
+
+## Core Docs
+
+| Guide | Use it for |
+|---|---|
+| [Product Guide](PRODUCT_GUIDE.md) | What Invenzo does, who it is for, major modules, packaging, and fit. |
+| [Admin Guide](ADMIN_GUIDE.md) | Day-to-day use: discovery, assets, CMDB, SAM, agents, reports, users, and integrations. |
+| [Deployment Guide](DEPLOYMENT_GUIDE.md) | Fresh install, embedded vs external PostgreSQL, offline install, upgrade, and uninstall. |
+| [Operations Guide](OPERATIONS_GUIDE.md) | Backup, restore, HA, disaster recovery, secrets, monitoring, AV/EDR exclusions, and support checks. |
+| [Validation Guide](VALIDATION_GUIDE.md) | Benchmarks, market-proof evidence, pilot validation, test coverage, and production readiness. |
 
 ---
 
-## Two repositories, two audiences
+## Fast Start
 
-Invenzo uses two GitHub repositories to keep source code protected while making deployment open:
-
-| Repo | URL | Visibility | Who uses it | What it contains |
-|---|---|---|---|---|
-| 📦 **invenzo-package** | [github.com/mitvaris/invenzo-package](https://github.com/mitvaris/invenzo-package) | 🌐 Public | Customers installing / upgrading | `install.sh`, `update.sh`, `docker-compose.yml`, Caddyfile — **no source code**. Pulls pre-built Docker images from Docker Hub. |
-| 🔒 **Invenzo** | [github.com/mitvaris/invenzo](https://github.com/mitvaris/invenzo) | 🔐 Private | Developers (you) | Full source code for API, UI, discovery engine, Go agent. Licensed commercial software. |
-
-**Customers receive pre-built Docker images.** `install.sh` from the public `invenzo-package` repo pulls images (`ghcr.io/mitvaris/invenzo-api`, `-discovery`, `-ui`) from Docker Hub. The images contain plain Python source, minified UI bundles, and static Go binaries. The IP-protection layer is the [commercial license agreement](https://github.com/mitvaris/invenzo-package/blob/main/LICENSE) plus Ed25519-signed module licenses — not source obfuscation, which provides no real protection against decompilation.
-
----
-
-## Evaluating Invenzo? Read these first
-
-Before you install or pay anything, three short pages tell you whether Invenzo fits your situation. We'd rather lose a sale than win a wrong-fit support ticket.
-
-<p>
-  <a href="WHO_IS_THIS_FOR.md" style="background:#9333EA;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;margin-right:8px;margin-bottom:8px;">🎯 Who is this for?</a>
-  <a href="PRICING.md" style="background:#9333EA;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;margin-right:8px;margin-bottom:8px;">💰 Pricing</a>
-  <a href="WHO_THIS_ISNT_FOR.md" style="background:#475569;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:500;display:inline-block;margin-bottom:8px;">⚠️ Who this isn't for</a>
-</p>
-
-* **[Who is this for?](WHO_IS_THIS_FOR.md)** — 5-question fit check. Answer "yes" to ≥4 and Invenzo is built for you.
-* **[Pricing](PRICING.md)** — Three tiers, all annual, prices on the page. Starter $4,800/yr · Professional $14,400/yr · Enterprise $36,000/yr.
-* **[Who this isn't for](WHO_THIS_ISNT_FOR.md)** — Hard disqualifiers + alternative tools we'd point you at instead.
-
----
-
-## Pick your path
-
-### 🚀 I want to install Invenzo (customer / production)
-
-**New Linux server, installing for the first time:**
+Default appliance install with bundled PostgreSQL:
 
 ```bash
-# 1. Clone the public install package (no source code, just deployment scripts)
 git clone https://github.com/mitvaris/invenzo-package.git /tmp/invenzo-package
 cd /tmp/invenzo-package
-
-# 2. Run the installer
 sudo bash install.sh
 ```
 
-The installer:
-- Installs Docker + openssl if missing
-- Generates strong random secrets (POSTGRES_PASSWORD, SECRET_KEY, VAULT_KEY, etc.)
-- Prompts for an admin password + hostname
-- Pulls the 3 Docker images from Docker Hub
-- Starts all services
-
-Open `https://<your-hostname>` in a browser after 5-10 minutes. Full details: [Customer Install](DEPLOYMENT_GUIDE.md#c-customer--fresh-install)
-
----
-
-### 🔄 I want to upgrade an existing install
+Customer-managed PostgreSQL install:
 
 ```bash
-cd /opt/invenzo
-sudo bash update.sh 1.9.3
+sudo bash install.sh --external-db
 ```
 
-Your `.env` secrets stay untouched — only the `VERSION=` line is updated. Full details: [UPGRADE.md](https://github.com/mitvaris/invenzo-package/blob/main/UPGRADE.md)
+Database mode is selected by `install.sh`, not inside the browser wizard. After
+containers start, open:
 
----
-
-### 🤖 How do endpoints get the agent?
-
-From the **Agents page** in the Invenzo UI:
-
-1. Log in as admin → navigate to **Agents**
-2. Click **"Download Installer"** — downloads `invenzo-installer.exe` with pre-configured server URL + registration token baked in
-3. Run the installer on the endpoint (double-click, or silent: `msiexec /i invenzo-agent-setup.msi /qn`)
-4. The installer:
-   - Installs the Go agent as a Windows service (or systemd / launchd on Linux / macOS)
-   - Writes `config.yaml` with the API URL + auth token
-   - Starts the service
-5. Within seconds, the agent checks in — the endpoint appears on the Assets page
-
-**No manual configuration needed on endpoints.** Everything is baked into the installer when the admin downloads it.
-
----
-
-### 💻 I'm a developer (with access to the private Invenzo repo)
-
-**First clone on a new laptop:**
-
-```bash
-git clone https://github.com/mitvaris/invenzo.git
-cd Invenzo
-bash bootstrap-dev.sh           # generates .env with random secrets + admin password
-docker compose up -d --build    # builds images locally from source
+```text
+https://<your-hostname>/install
 ```
 
-**Daily update:**
-
-```bash
-cd Invenzo
-git pull origin master
-docker compose up -d --build   # rebuilds from latest source + auto-applies DB migrations
-```
-
-**Release a new version:**
-
-```bash
-bash scripts/bump-version.sh patch --all   # bump → commit → build → push to Docker Hub
-```
-
-Full details: [Developer Setup](DEPLOYMENT_GUIDE.md#a-developer--first-install)
+The wizard validates the selected database, creates the first admin, applies the
+schema, and seeds default application data.
 
 ---
 
-## Latest release
+## Current Product Areas
 
-**v1.15.35** — *2026-05-06* — Real client IP on Sessions table, clearable nullable FKs, agent-rollout duplicate-paused fix, login branding polish.
-
-GitHub Container Registry images (pull with `docker pull ghcr.io/mitvaris/<name>:1.15.35`):
-
-- [`ghcr.io/mitvaris/invenzo-api`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-api)
-- [`ghcr.io/mitvaris/invenzo-discovery`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-discovery)
-- [`ghcr.io/mitvaris/invenzo-ui`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-ui)
-- [`ghcr.io/mitvaris/invenzo-updater`](https://github.com/mitvaris/invenzo-package/pkgs/container/invenzo-updater)
-
-### What's new in 1.15.35
-
-- **Sessions table shows the real client IP** — previously every row read `10.201.0.3` (the UI container's bridge address) regardless of which device the user actually signed in from. The login / session / audit code paths now read the original client IP via `X-Forwarded-For` / `X-Real-IP` (set by Caddy → nginx automatically). Affects Settings → Security → Sessions and the audit log.
-- **Browser column on Sessions** parses the User-Agent into a short label (`Chrome · Windows 10/11`, `Safari · macOS`, `Script / API` for curl/wget/scripts). Raw UA preserved on hover for support engineers.
-- **Vendor / Location / Team / Parent fields can now be cleared** — the Vendor & Ownership Save button on asset detail used to look successful but silently keep the old value when you tried to clear a nullable FK. Fixed: clearing the dropdown now writes `NULL` to the DB.
-- **Agent rollout duplicates fixed** — the auto-detector no longer creates a fresh duplicate rollout every 5-minute tick when an existing one is in `paused` or `in_canary` state. Stale targets pointing at dead registrations are also skipped (drift count + child enrollment now agree).
-- **Login page polish** — wordmark sized up, gradient line "True oversight." gets proper breathing room, sidebar wordmark renders at natural PNG dimensions.
-
-Upgrade: `sudo bash update.sh 1.15.35` — no manual migration required.
-
-### What's new in 1.9.3
-
-- **`/api/v1/agents/internal/*` now requires a shared-secret header** — the worker uses `INTERNAL_API_SECRET` (auto-generated by `install.sh`, backfilled by `update.sh` on upgrade). Protects against token minting if the route is accidentally exposed through a reverse proxy.
-- **Outbound webhooks now verify TLS certificates by default** — `WEBHOOK_SKIP_TLS_VERIFY=true` env var is an interim escape hatch for self-signed destinations.
-- **UI dependency bumps** — `axios`, `lodash`, `follow-redirects` upgraded to patched versions. Production UI shows 0 known vulnerabilities on `npm audit`.
-
-Upgrade: `sudo bash update.sh 1.9.3` — `update.sh` handles the new env var automatically.
-
-### What's new in 1.9.2
-
-- **Plugin read-only mode** — pausing or losing the license on a plugin no longer locks you out of historical data. Every plugin-gated page (Cost Center, Contracts, Procurement, Budgets, Warranty, Change Management, Compliance, SAM) shows a clear banner, keeps existing records readable, and hides Create/Edit/Delete buttons. Re-enabling instantly restores writes.
-- **Asset detail overhaul** — every tab (Software, History, Tasks, Assignments, Contracts, Properties, Location, Connections) now fills the full screen width with a single scrollbar. No floating cards, no hidden columns, no double-scroll.
-- **Dashboard simplified** — customize widgets / edit-layout removed. View-only with time-range pills + Export.
-- **Bug fixes** — budget-save date coercion, hero stats divider full-width, *Link Existing Asset* search icon/placeholder collision.
-
-No manual migration required — `update.sh` pulls 1.9.2 images and Alembic applies schema on API startup.
-
----
-
-## How do I verify what's running?
-
-Open **Settings → Version & Schema** in the UI. It shows:
-
-- Application version (e.g. `1.9.2`)
-- DB schema version (e.g. `0069`)
-- Sync status: ✅ In Sync / ⚠️ Migration Pending / ❓ Unknown
-- Full migration history
-- **Compare** widget to verify a customer/staging install against your local
-
-No SSH, no SQL, no guessing.
-
----
-
-## System requirements
-
-| Resource | Minimum | Recommended |
-|---|---|---|
-| OS | Ubuntu 22.04 / Debian 12 / RHEL 9 | Ubuntu 22.04 LTS |
-| CPU | 4 vCPU | 8 vCPU |
-| RAM | 8 GB | 16 GB |
-| Disk | 50 GB | 200 GB |
-| Network | Outbound HTTPS (Docker Hub) | + inbound TCP 80/443 |
-
----
-
-## Links
-
-| | |
+| Area | Included capabilities |
 |---|---|
-| 🎯 Who is this for? | [WHO_IS_THIS_FOR.md](WHO_IS_THIS_FOR.md) |
-| 💰 Pricing | [PRICING.md](PRICING.md) |
-| ⚠️ Who this isn't for | [WHO_THIS_ISNT_FOR.md](WHO_THIS_ISNT_FOR.md) |
-| ⚡ Performance & scale benchmarks | [BENCHMARKS.md](BENCHMARKS.md) |
-| 🏗️ HA reference architecture | [HA_ARCHITECTURE.md](HA_ARCHITECTURE.md) |
-| 🚨 Disaster runbook | [DISASTER_RUNBOOK.md](DISASTER_RUNBOOK.md) |
-| 📦 Install package (public) | [github.com/mitvaris/invenzo-package](https://github.com/mitvaris/invenzo-package) |
-| 🔒 Source code (private) | [github.com/mitvaris/invenzo](https://github.com/mitvaris/invenzo) |
-| 📖 Full deployment guide | [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) |
-| 🔐 Secrets: storage, install flow, runtime, recovery | [SECRETS.md](SECRETS.md) |
-| 🔑 SSO setup: Google · Azure AD · Okta · OIDC · SAML · LDAP | [SSO.md](SSO.md) |
-| 🛡️ AV / EDR exclusions (hand to customer's AV admin) | [AV_EXCLUSIONS.md](AV_EXCLUSIONS.md) |
-| 🎨 UI design reference | [UI_DESIGN_GUIDE.md](UI_DESIGN_GUIDE.md) |
-| 🐳 Docker Hub | [github.com/orgs/mitvaris/packages](https://github.com/orgs/mitvaris/packages) |
+| Discovery | Distributed collectors, network scans, credentialed discovery, AD, SNMP, SSH, WMI/WinRM readiness, virtualization/cloud source models, troubleshooting, and discovery coverage. |
+| Inventory | Hardware, OS, software, ownership, lifecycle, location, contracts, peripherals, components, and history. |
+| CMDB | CI relationships, dependency and topology foundations, service mapping, network/virtualization/application map views. |
+| SAM | Software installs, licenses, policies, compliance evidence, usage and entitlement foundations, and audit-ready reporting flows. |
+| Agents | Endpoint telemetry, installer bundles, auto-deploy queue, rollout controls, blocked assets, self-update, and diagnostics. |
+| Governance | RBAC, audit logs, evidence packs, compliance checks, executive dashboards, scheduled reporting, and market-proof workflows. |
+| Integrations | SSO/LDAP, AD/Entra models, SCCM/Intune/Jamf/Tenable/Qualys/Jira/ServiceNow readiness surfaces and connector-health tracking. |
 
 ---
 
-<p style="text-align:center;color:#888;font-size:12px;margin-top:40px">
-  Invenzo ITAM v1.9.3 · Self-hosted IT Asset Management · Commercial License
-</p>
+## Honest Evidence Policy
+
+Invenzo should not claim market-leader parity from placeholder data. Benchmark
+scores, connector health, certified SNMP packs, pilot evidence, and executive
+proof packs must come from real persisted evidence or explicit proof-lab runs.
+
+Use the [Validation Guide](VALIDATION_GUIDE.md) before publishing customer claims
+about 50k/100k scale, device recognition accuracy, or competitor comparisons.
+
+---
+
+## Repository Model
+
+| Repository | Audience | Purpose |
+|---|---|---|
+| `invenzo-package` | Customers | Public install/upgrade package. Contains scripts and compose files, not product source. |
+| `Invenzo` | Developers | Private source repository for API, UI, discovery engine, agent, and docs. |
+| `invenzo-docs` | Customers and operators | Public documentation generated from this folder. |
